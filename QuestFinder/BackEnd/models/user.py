@@ -19,15 +19,8 @@ class User (db.Model):
     is_admin = db.Column(db.Boolean, nullable = False, default = False)
 
     # verification_status (unverified / approved / rejected)
-    verification_status = db.Column(
-        db.String(30), 
-        nullable = False, 
-        default = 'unverified')
-    
-    created_at = db.Column(
-        db.DateTime(timezone = True),
-        nullable = False, 
-        default = lambda: datetime.now(timezone.utc))
+    verification_status = db.Column(db.String(30), nullable = False, default = 'unverified')
+    created_at = db.Column(db.DateTime(timezone = True),nullable = False, default = lambda: datetime.now(timezone.utc))
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -50,6 +43,7 @@ class User (db.Model):
         "created_at": self.created_at.isoformat()
 
     }
+
 
 
 """

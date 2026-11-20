@@ -37,6 +37,6 @@ class Transaction(db.Model):
             "client_id": self.client_id,
             "worker_id": self.worker_id,
             "amount": self.amount,
-            "commision": self.commission,
+            "commision": self.commision,
             "created_at": self.created_at
         }
