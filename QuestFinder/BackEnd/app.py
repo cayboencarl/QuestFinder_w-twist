@@ -12,5 +12,8 @@ def create_app():
     
     # Import models (so SQLAlchemy knows about them)
     from models import User, Task, Application, Transaction
+
+    from routes.tasks import tasks_bp
+    app.register_blueprint(tasks_bp)
     
     return app
