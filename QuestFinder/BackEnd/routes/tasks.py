@@ -1,9 +1,10 @@
 from flask import Blueprint, request, jsonify
 from services.task_service import create_task
-from models import User
+from models import User, Task
 from services.task_service import get_all_tasks, get_task, accept_task
 from database import db
 from services.task_service import complete_task
+from services.match_service import recommend_workers
 
 tasks_bp = Blueprint("tasks", __name__, url_prefix="/api/tasks")
 
@@ -80,3 +81,53 @@ def complete(task_id):
         "worker_receives": transaction.amount - transaction.commission,
     }), 201
 
+@tasks_bp.route("/<int:task_id>/matches", methods=["GET"])
+def matches(task_id):
+    user_id = request.headers.get("X-User-Id")
+    if not user_id:
+        return jsonify({"error": "X-User-Id header is required"}), 401
+
+    user = db.session.get(User, int(user_id))
+    if user is None:
+        return jsonify({"error": "user not found"}), 401
+
+    task = db.session.get(Task, task_id)
+    if task is None:
+        return jsonify({"error": "task not found"}), 404
+
+    if task.created_by != user.id:
+        return jsonify({"errors": "only the client who posted this task can view matches"}), 403
+
+    return jsonify(recommend_workers(task)), 200
+
+@tasks_bp.route("/<int:task_id>/select", methods=["POST"])
+def select_worker(task_id):
+    user_id = request.headers.get("X-User-Id")
+    if not user_id:
+        return jsonify({"error": "X-User-Id header is required"}), 401
+
+    user = db.session.get(User, int(user_id))
+    if user is None:
+        return jsonify({"error": "user not found"}), 401
+
+    data = request.get_json(silent=True) or {}
+    worker_id = data.get("worker_id")
+    if not worker_id:
+        return jsonify({"errors": ["worker_id is required"]}), 400
+
+    task = db.session.get(Task, task_id)
+    if task is None:
+        return jsonify({"error": "task not found"}), 404
+    if task.created_by != user.id:
+        return jsonify({"errors": ["only the client who posted this task can select a worker"]}), 403
+    if task.status != "open":
+        return jsonify({"errors": ["this task is no longer open"]}), 400
+
+    worker = db.session.get(User, int(worker_id))
+    if worker is None or not worker.is_worker:
+        return jsonify({"errors": ["selected user is not a worker"]}), 400
+
+    task.worker_id = worker.id
+    task.status = "in_progress"
+    db.session.commit()
+    return jsonify(task.to_dict()), 200
