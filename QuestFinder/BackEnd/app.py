@@ -15,5 +15,7 @@ def create_app():
 
     from routes.tasks import tasks_bp
     app.register_blueprint(tasks_bp)
-    
+
+    from routes.wallet import wallet_bp
+    app.register_blueprint(wallet_bp)
     return app

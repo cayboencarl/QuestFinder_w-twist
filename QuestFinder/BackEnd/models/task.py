@@ -20,6 +20,7 @@ class Task(db.Model):
     created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     status = db.Column(db.String(30), nullable=False, default='open')
     created_at = db.Column(db.DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+    worker_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
 
     def to_dict(self):
         return {
@@ -36,4 +37,5 @@ class Task(db.Model):
             "created_by": self.created_by,
             "status": self.status,
             "created_at": self.created_at.isoformat(),
+            "worker_id": self.worker_id,
         }
