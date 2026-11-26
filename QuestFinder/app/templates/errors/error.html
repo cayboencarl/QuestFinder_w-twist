@@ -1,0 +1,9 @@
+{% extends "layouts/plain.html" %}
+{% block title %}Error {{ code }}{% endblock %}
+{% block content %}
+  <div class="empty-state">
+    <p class="empty-code">{{ code }}</p>
+    <p>{{ message }}</p>
+    <a class="btn btn-primary" href="{{ url_for('main.home') }}">Back to Home</a>
+  </div>
+{% endblock %}

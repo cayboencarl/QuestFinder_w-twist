@@ -1,0 +1,68 @@
+{% extends "layouts/admin.html" %}
+{% block title %}Review verification{% endblock %}
+{% block page_title %}Review verification{% endblock %}
+{% block content %}
+  <a href="{{ url_for('admin.dashboard') }}" class="small">← All verifications</a>
+  <div class="card mt">
+    <div class="row">
+      {% with person=req.user, size='lg' %}{% include "partials/avatar.html" %}{% endwith %}
+      <div class="grow">
+        <h2 style="margin:0">{{ req.user.full_name }}</h2>
+        <p class="sub muted small" style="margin:0">{{ req.user.email }} · sent {{ req.submitted_at|local_dt }}</p>
+      </div>
+      <span class="badge badge-{{ req.status }}">{{ req.status }}</span>
+    </div>
+  </div>
+
+  <div class="scan-pair">
+    <figure><img src="{{ url_for('files.verification', req_id=req.id, which='id') }}" alt="ID scan"><figcaption>ID scan</figcaption></figure>
+    <figure><img src="{{ url_for('files.verification', req_id=req.id, which='face') }}" alt="Face scan"><figcaption>Live face scan</figcaption></figure>
+  </div>
+
+  <div class="card">
+    <h3 class="section-title" style="margin-top:0">Automatic checks</h3>
+    <ul class="checks">
+      <li class="{{ 'ok' if checks.similarity >= 45 else 'bad' }}">Face match: <b>{{ checks.similarity }}%</b> similar (score {{ '%.3f'|format(req.face_match_distance or 0) }})</li>
+      <li class="{{ 'ok' if checks.is_adult else 'bad' }}">Age on ID: <b>{{ checks.age_on_id }}</b> {{ '(18+)' if checks.is_adult else '(UNDER 18)' }}</li>
+      <li class="{{ 'ok' if checks.birthdate_matches else 'bad' }}">Birthdate on ID matches account</li>
+      <li class="{{ 'ok' if checks.name_matches else 'warn' }}">Name on ID {{ 'matches' if checks.name_matches else 'differs from' }} account name</li>
+    </ul>
+    <dl class="kv">
+      <dt>ID type</dt><dd>{{ req.id_type_label }}</dd>
+      <dt>ID number</dt><dd>••••{{ req.id_number_last4 }}</dd>
+      <dt>Name on ID</dt><dd>{{ req.name_on_id }}</dd>
+      <dt>Account name</dt><dd>{{ req.user.full_name }}</dd>
+      <dt>Birthdate on ID</dt><dd>{{ req.birthdate_on_id.strftime('%B %d, %Y') }}</dd>
+    </dl>
+    <p class="hint small muted mt">Check that the photo, name and birthdate on the ID image are real and match the typed details, and that the live face is the same person.</p>
+  </div>
+
+  {% if req.status == "pending" %}
+    <form method="post" class="card form" data-confirm="Approve {{ req.user.full_name }}? They will be able to post and accept quests.">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="action" value="approve">
+      <button class="btn btn-primary btn-block" {{ 'disabled' if not checks.is_adult }}>Approve — verified, 18+</button>
+    </form>
+    <form method="post" class="card form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="action" value="reject">
+      <div class="field">
+        <label for="reason">Reason for rejecting</label>
+        <select name="reason" id="reason">
+          <option value="">Choose a reason…</option>
+          {% for r in reasons %}<option>{{ r }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label for="other_reason">Or write a reason</label>
+        <input type="text" name="other_reason" id="other_reason" maxlength="200">
+      </div>
+      <button class="btn btn-danger btn-block">Reject</button>
+    </form>
+  {% else %}
+    <div class="card small">
+      Reviewed by {{ req.reviewed_by.full_name if req.reviewed_by else '—' }} on {{ req.reviewed_at|local_dt }}.
+      {% if req.rejection_reason %}<br>Reason: {{ req.rejection_reason }}{% endif %}
+    </div>
+  {% endif %}
+{% endblock %}

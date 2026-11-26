@@ -1,0 +1,9 @@
+{#- Usage: {% with person=user, size='md' %}{% include "partials/avatar.html" %}{% endwith %} -#}
+<span class="avatar avatar-{{ size|default('md') }}">
+  {% if person and person.avatar_filename %}
+    <img src="{{ link_to('files.avatar', user_id=person.id) }}" alt="{{ person.first_name }}">
+  {% elif person %}
+    {{ person.first_name[:1] }}{{ person.last_name[:1] }}
+  {% endif %}
+  {% if person and person.is_verified %}<i class="avatar-check" title="Verified">✓</i>{% endif %}
+</span>

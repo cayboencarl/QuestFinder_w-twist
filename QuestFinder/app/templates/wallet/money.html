@@ -1,0 +1,25 @@
+{% extends "layouts/app.html" %}
+{% block title %}{{ kind|capitalize }}{% endblock %}
+{% block page_title %}{{ kind|capitalize }}{% endblock %}
+{% block content %}
+  <div class="card center">
+    <p class="muted small" style="margin:0">Available balance</p>
+    <p class="wallet-balance dark">{{ wallet.balance|peso }}</p>
+  </div>
+  <form method="post" class="form" novalidate>
+    {{ form.hidden_tag() }}
+    {% with field=form.amount, prefix="₱", attrs={"inputmode": "decimal", "placeholder": "0.00", "id": "amount"} %}{% include "partials/field.html" %}{% endwith %}
+    <div class="chip-row">
+      {% for a in quick %}<button type="button" class="chip" data-amount="{{ a }}">₱{{ '{:,}'.format(a) }}</button>{% endfor %}
+    </div>
+    {% with field=form.method %}{% include "partials/field.html" %}{% endwith %}
+    <p class="hint small muted">{{ 'Deposit' if kind == 'deposit' else 'Withdrawal' }} is simulated. No real money is moved.</p>
+    <button class="btn {{ 'btn-accent' if kind == 'deposit' else 'btn-primary' }} btn-block" type="submit">{{ kind|capitalize }}</button>
+  </form>
+{% endblock %}
+{% block scripts %}
+<script>
+  document.querySelectorAll("[data-amount]").forEach((b) =>
+    b.addEventListener("click", () => { document.getElementById("amount").value = b.dataset.amount; }));
+</script>
+{% endblock %}

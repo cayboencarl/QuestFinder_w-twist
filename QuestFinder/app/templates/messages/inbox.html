@@ -1,0 +1,37 @@
+{% extends "layouts/app.html" %}
+{% block title %}Messages{% endblock %}
+{% block page_title %}Messages{% endblock %}
+{% block content %}
+  {% if rows %}
+    <div class="card">
+      <ul class="list">
+        {% for r in rows %}
+          <li><a class="list-item {{ 'unread' if r.unread }}" href="{{ url_for('messages.thread', convo_id=r.convo.id) }}">
+            {% with person=r.other, size='md' %}{% include "partials/avatar.html" %}{% endwith %}
+            <span class="grow">
+              <span class="title wrap">
+                {%- if r.last and r.last.sender_id != current_user.id -%}
+                  A {{ r.other_role }} messaged you
+                {%- else -%}
+                  {{ r.other.full_name }}
+                {%- endif -%}
+              </span>
+              <span class="sub">{{ r.other.first_name }} · {{ r.convo.quest.title }}</span>
+              <span class="sub preview">
+                {%- if r.last -%}
+                  {{ 'You: ' if r.last.sender_id == current_user.id }}{{ r.last.body or '📷 Photo' }}
+                {%- else -%}Say hello 👋{%- endif -%}
+              </span>
+            </span>
+            <span class="inbox-meta">
+              <small class="muted">{{ (r.last.created_at if r.last else r.convo.created_at)|time_ago }}</small>
+              {% if r.unread %}<em class="count-badge">{{ r.unread }}</em>{% endif %}
+            </span>
+          </a></li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% else %}
+    <div class="empty-state">💬<br>No messages yet.<br>A chat opens when a client accepts a task worker for a quest.</div>
+  {% endif %}
+{% endblock %}

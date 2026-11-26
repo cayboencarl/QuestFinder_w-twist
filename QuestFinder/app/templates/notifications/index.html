@@ -1,0 +1,29 @@
+{% extends "layouts/app.html" %}
+{% block title %}Notifications{% endblock %}
+{% block page_title %}Notifications{% endblock %}
+{% block topbar_actions %}
+  {% if unread_ids %}
+    <form method="post" action="{{ url_for('notifications.read_all') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn btn-light btn-sm" type="submit">Mark all read</button>
+    </form>
+  {% else %}<span class="icon-btn-spacer"></span>{% endif %}
+{% endblock %}
+{% block content %}
+  {% if items %}
+    <div class="card">
+      <ul class="list">
+        {% for n in items %}
+          <li><a class="list-item {{ 'unread' if n.id in unread_ids }}" href="{{ url_for('notifications.open_link', note_id=n.id) }}">
+            <span class="notif-icon notif-{{ n.kind }}">
+              {%- if n.kind == 'verification_result' %}🪪{% elif n.kind == 'quest_completed' %}₱{% elif n.kind == 'quest_update' %}!{% else %}✓{% endif -%}
+            </span>
+            <span class="grow"><span class="title wrap">{{ n.message }}</span><span class="sub">{{ n.created_at|time_ago }}</span></span>
+          </a></li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% else %}
+    <div class="empty-state">🔔<br>No notifications yet.<br>You'll be notified when a quest is accepted.</div>
+  {% endif %}
+{% endblock %}

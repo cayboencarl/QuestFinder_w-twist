@@ -1,0 +1,47 @@
+{% extends "layouts/app.html" %}
+{% block title %}Task workers for {{ quest.title }}{% endblock %}
+{% block page_title %}Choose a task worker{% endblock %}
+{% block content %}
+  <div class="card">
+    <div class="row between"><b>{{ quest.title }}</b><span class="pay">{{ quest.pay|peso }}</span></div>
+    <p class="small muted" style="margin:4px 0 0">Wallet balance: <b>{{ balance|peso }}</b>.
+      Accepting a task worker reserves {{ quest.pay|peso }} from your wallet.</p>
+    {% if balance < quest.pay %}
+      <a class="btn btn-accent btn-sm mt" href="{{ url_for('wallet.deposit') }}">Deposit to your wallet first</a>
+    {% endif %}
+  </div>
+
+  {% for a in apps %}
+    <div class="card applicant">
+      <a class="row" href="{{ url_for('profile.view', user_id=a.worker_id) }}">
+        {% with person=a.worker, size='lg' %}{% include "partials/avatar.html" %}{% endwith %}
+        <span class="grow">
+          <b>{{ a.worker.full_name }}</b><br>
+          <span class="small muted">★ {{ ratings[a.worker_id].average if ratings[a.worker_id].average is not none else 'New' }}
+            {% if ratings[a.worker_id].count %}({{ ratings[a.worker_id].count }}){% endif %}
+            {% if a.distance_km is not none %} · 📍 {{ a.distance_km|km }} away{% endif %}</span>
+        </span>
+        <span class="badge badge-{{ a.status }}">{{ a.status }}</span>
+      </a>
+      {% if a.worker.skills %}
+        <div class="chip-row">{% for s in a.worker.skills.split(',') %}<span class="chip chip-static">{{ s.strip() }}</span>{% endfor %}</div>
+      {% endif %}
+      {% if a.message %}<p class="small applicant-msg">“{{ a.message }}”</p>{% endif %}
+      {% if a.status == 'pending' and quest.status == 'open' %}
+        <div class="btn-row mt">
+          <form method="post" action="{{ url_for('quests.decide', quest_id=quest.id, app_id=a.id, action='decline') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn-ghost btn-block" type="submit" style="margin:0">Decline</button>
+          </form>
+          <form method="post" action="{{ url_for('quests.decide', quest_id=quest.id, app_id=a.id, action='accept') }}"
+                data-confirm="Accept {{ a.worker.first_name }}? {{ quest.pay|peso }} will be reserved from your wallet.">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn-primary btn-block" type="submit" style="margin:0">Accept</button>
+          </form>
+        </div>
+      {% endif %}
+    </div>
+  {% else %}
+    <div class="empty-state">No task worker has accepted this quest yet.<br>You'll get a notification when someone does.</div>
+  {% endfor %}
+{% endblock %}

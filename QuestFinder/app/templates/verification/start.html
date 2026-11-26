@@ -1,0 +1,46 @@
+{% extends "layouts/app.html" %}
+{% block title %}Identity verification{% endblock %}
+{% block page_title %}Identity verification{% endblock %}
+{% block content %}
+  {% if state == "verified" %}
+    <div class="card center">
+      <div class="status-icon status-ok">✓</div>
+      <h2>You're verified</h2>
+      <p class="muted">Your ID and face were checked and approved by the Barangay Admin
+        {% if current_user.verified_at %}on {{ current_user.verified_at|local_dt('%B %d, %Y') }}{% endif %}.</p>
+      <a href="{{ url_for('main.home') }}" class="btn btn-primary btn-block">Back to Home</a>
+    </div>
+
+  {% elif state == "pending" %}
+    <div class="card center">
+      <div class="status-icon status-wait">⏳</div>
+      <h2>Waiting for review</h2>
+      <p class="muted">Your ID and face scan were sent on {{ latest.submitted_at|local_dt }}.
+        The Barangay Admin will review them. You'll get a notification once it's done.</p>
+      <dl class="kv">
+        <dt>ID</dt><dd>{{ latest.id_type_label }} ••••{{ latest.id_number_last4 }}</dd>
+        <dt>Face match</dt><dd>Passed</dd>
+      </dl>
+    </div>
+
+  {% else %}
+    {% if state == "rejected" %}
+      <div class="banner banner-warning">
+        <strong>Your last verification was not approved</strong>
+        <span>{{ latest.rejection_reason }}</span>
+      </div>
+    {% endif %}
+    <div class="card">
+      <h2>Verify your identity</h2>
+      <p class="muted small">To keep everyone safe, every QuestFinder member must be
+        <b>18 years old or above</b> and verified by Brgy. San Vicente.</p>
+      <ol class="steps">
+        <li><b>Scan your ID.</b> Use a valid government or school ID that shows your photo and birthdate.</li>
+        <li><b>Scan your face.</b> We compare your face with the photo on your ID.</li>
+        <li><b>Barangay review.</b> The Barangay Admin checks your ID and approves your account.</li>
+      </ol>
+      <p class="hint small muted">🔒 Your ID and face images are only seen by you and the Barangay Admin. We only keep the last 4 digits of your ID number. Face matching runs on your phone.</p>
+      <a href="{{ url_for('verification.scan') }}" class="btn btn-primary btn-block">Start verification</a>
+    </div>
+  {% endif %}
+{% endblock %}

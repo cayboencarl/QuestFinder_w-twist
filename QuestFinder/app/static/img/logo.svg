@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="QuestFinder">
+  <!-- Original QuestFinder mark: a map pin holding a compass star -->
+  <path d="M48 6C30.3 6 16 20.1 16 37.6 16 61.3 48 90 48 90s32-28.7 32-52.4C80 20.1 65.7 6 48 6z" fill="#0E5E4E"/>
+  <circle cx="48" cy="37" r="20" fill="#F4F8F6"/>
+  <path d="M48 21l4.6 11.4L64 37l-11.4 4.6L48 53l-4.6-11.4L32 37l11.4-4.6z" fill="#F59E0B"/>
+  <circle cx="48" cy="37" r="3.2" fill="#0E5E4E"/>
+</svg>

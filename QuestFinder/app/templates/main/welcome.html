@@ -1,0 +1,16 @@
+{% extends "layouts/plain.html" %}
+{% block title %}Welcome{% endblock %}
+{% block content %}
+  <div class="welcome">
+    <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="" class="logo-mark logo-mark-xl">
+    <h1 class="logo-word">Quest<span>Finder</span></h1>
+    <p class="welcome-lead">Small tasks, done by neighbors.<br>Post a quest or find one near you in Brgy. San Vicente.</p>
+    <ul class="welcome-points">
+      <li><b>📍</b> Quests sorted by distance in km</li>
+      <li><b>🪪</b> ID + face verified members, 18 and above</li>
+      <li><b>₱</b> Pay reserved in the wallet until the work is done</li>
+    </ul>
+    <a href="{{ link_to('auth.register') }}" class="btn btn-primary btn-block">Create an account</a>
+    <a href="{{ link_to('auth.login') }}" class="btn btn-ghost btn-block">Log in</a>
+  </div>
+{% endblock %}

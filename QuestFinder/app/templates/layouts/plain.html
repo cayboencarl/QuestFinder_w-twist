@@ -1,0 +1,9 @@
+{#- Layout for screens without the bottom tab bar (welcome, login, register, errors). -#}
+{% extends "layouts/base.html" %}
+{% block body_class %}plain{% endblock %}
+{% block shell %}
+  <main class="screen screen-plain">
+    {% include "partials/flash.html" %}
+    {% block content %}{% endblock %}
+  </main>
+{% endblock %}

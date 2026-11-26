@@ -1,0 +1,102 @@
+{% extends "layouts/app.html" %}
+{% block title %}Scan ID and face{% endblock %}
+{% block page_title %}Verify identity{% endblock %}
+{% block content %}
+<div id="verifyApp"
+     data-models="{{ url_for('static', filename='vendor/face-api/model') }}"
+     data-submit="{{ url_for('verification.submit') }}"
+     data-threshold="{{ threshold }}">
+
+  <ol class="stepper">
+    <li class="active" data-step-dot="1">ID</li>
+    <li data-step-dot="2">Face</li>
+    <li data-step-dot="3">Submit</li>
+  </ol>
+
+  <p class="small muted center" id="modelStatus">Loading face scanner…</p>
+
+  {# ---------- Step 1: scan the ID ---------- #}
+  <section data-step="1">
+    <h2>Step 1 · Scan your ID</h2>
+    <p class="small muted">Place your ID on a flat surface in good light. Fill the frame and avoid glare.</p>
+
+    <div class="camera">
+      <video id="idVideo" playsinline muted hidden></video>
+      <img id="idPreview" alt="Scanned ID" hidden>
+      <div class="camera-guide camera-guide-id" id="idGuide" hidden></div>
+      <div class="camera-empty" id="idEmpty">🪪<span>Your ID will appear here</span></div>
+    </div>
+    <div class="btn-row">
+      <button type="button" class="btn btn-light" id="idCameraBtn">Open camera</button>
+      <button type="button" class="btn btn-primary" id="idCaptureBtn" hidden>Capture ID</button>
+      <label class="btn btn-ghost" id="idUploadLabel">Upload photo
+        <input type="file" accept="image/*" capture="environment" id="idFile" hidden>
+      </label>
+    </div>
+    <p class="scan-msg" id="idMsg" role="status"></p>
+
+    <div class="form mt">
+      <div class="field">
+        <label for="idType">Type of ID</label>
+        <select id="idType" required>
+          <option value="">Choose…</option>
+          {% for value, label in id_types %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label for="idNumber">ID number</label>
+        <input type="text" id="idNumber" autocomplete="off" maxlength="40">
+        <p class="hint">Only the last 4 characters are saved.</p>
+      </div>
+      <div class="field">
+        <label for="nameOnId">Full name on ID</label>
+        <input type="text" id="nameOnId" maxlength="130" value="{{ current_user.full_name }}">
+      </div>
+      <div class="field">
+        <label for="birthdateOnId">Birthdate on ID</label>
+        <input type="date" id="birthdateOnId">
+        <p class="hint">Must match your account birthdate. You must be 18 or older.</p>
+      </div>
+    </div>
+    <button type="button" class="btn btn-primary btn-block" id="toStep2" disabled>Next: scan my face</button>
+  </section>
+
+  {# ---------- Step 2: live face scan ---------- #}
+  <section data-step="2" hidden>
+    <h2>Step 2 · Scan your face</h2>
+    <p class="small muted">Look straight at the camera, remove sunglasses or a cap, and keep your face inside the oval.</p>
+    <div class="camera camera-face">
+      <video id="faceVideo" playsinline muted></video>
+      <div class="camera-guide camera-guide-face"></div>
+    </div>
+    <button type="button" class="btn btn-primary btn-block" id="faceScanBtn" disabled>Scan my face</button>
+    <p class="scan-msg" id="faceMsg" role="status"></p>
+    <div class="match-result" id="matchResult" hidden></div>
+    <div class="btn-row">
+      <button type="button" class="btn btn-ghost" id="backToStep1">Back</button>
+      <button type="button" class="btn btn-primary" id="toStep3" disabled>Next</button>
+    </div>
+  </section>
+
+  {# ---------- Step 3: review & submit ---------- #}
+  <section data-step="3" hidden>
+    <h2>Step 3 · Submit for barangay review</h2>
+    <div class="scan-pair">
+      <figure><img id="reviewId" alt="ID"><figcaption>ID</figcaption></figure>
+      <figure><img id="reviewFace" alt="Face"><figcaption>Face scan</figcaption></figure>
+    </div>
+    <dl class="kv" id="reviewDetails"></dl>
+    <label class="checkbox mt"><input type="checkbox" id="confirmTrue">
+      <span>I confirm this is my own valid ID, the details are true, and I am 18 years old or above.</span></label>
+    <p class="scan-msg" id="submitMsg" role="status"></p>
+    <div class="btn-row">
+      <button type="button" class="btn btn-ghost" id="backToStep2">Back</button>
+      <button type="button" class="btn btn-primary" id="submitBtn" disabled>Submit</button>
+    </div>
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}
+  <script src="{{ url_for('static', filename='vendor/face-api/face-api.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/verification.js') }}"></script>
+{% endblock %}

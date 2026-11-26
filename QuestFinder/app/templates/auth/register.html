@@ -1,0 +1,24 @@
+{% extends "layouts/plain.html" %}
+{% block title %}Create an account{% endblock %}
+{% block content %}
+  <div class="auth-head">
+    <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="" class="logo-mark">
+    <h1>Create your account</h1>
+    <p class="muted">One account lets you post quests and accept quests.</p>
+  </div>
+  <form method="post" class="form" novalidate>
+    {{ form.hidden_tag() }}
+    <div class="form-grid-2">
+      {% with field=form.first_name, attrs={"autocomplete": "given-name"} %}{% include "partials/field.html" %}{% endwith %}
+      {% with field=form.last_name, attrs={"autocomplete": "family-name"} %}{% include "partials/field.html" %}{% endwith %}
+    </div>
+    {% with field=form.email, attrs={"autocomplete": "email", "placeholder": "you@example.com"} %}{% include "partials/field.html" %}{% endwith %}
+    {% with field=form.phone, attrs={"autocomplete": "tel", "placeholder": "09XXXXXXXXX", "inputmode": "numeric"} %}{% include "partials/field.html" %}{% endwith %}
+    {% with field=form.birthdate, hint="You must be 18 or older. This must match the birthdate on your ID." %}{% include "partials/field.html" %}{% endwith %}
+    {% with field=form.password, attrs={"autocomplete": "new-password"}, hint="At least 8 characters with letters and numbers." %}{% include "partials/field.html" %}{% endwith %}
+    {% with field=form.confirm, attrs={"autocomplete": "new-password"} %}{% include "partials/field.html" %}{% endwith %}
+    {% with field=form.agree %}{% include "partials/field.html" %}{% endwith %}
+    <button class="btn btn-primary btn-block" type="submit">Create account</button>
+  </form>
+  <p class="auth-foot">Already have an account? <a href="{{ url_for('auth.login') }}"><b>Log in</b></a></p>
+{% endblock %}

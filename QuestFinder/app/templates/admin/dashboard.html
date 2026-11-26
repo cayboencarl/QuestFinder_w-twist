@@ -1,0 +1,38 @@
+{% extends "layouts/admin.html" %}
+{% block title %}Barangay Admin{% endblock %}
+{% block content %}
+  <div class="admin-hello">
+    <p class="muted small">Brgy. San Vicente, Baguio City</p>
+    <h2>Identity verifications</h2>
+  </div>
+  <div class="stat-row">
+    <div class="stat"><strong>{{ counts.pending }}</strong><small>waiting</small></div>
+    <div class="stat"><strong>{{ verified }}</strong><small>verified members</small></div>
+    <div class="stat"><strong>{{ members }}</strong><small>all members</small></div>
+  </div>
+
+  <nav class="segmented" aria-label="Filter">
+    {% for s, label in [("pending", "Waiting"), ("approved", "Approved"), ("rejected", "Rejected")] %}
+      <a href="{{ url_for('admin.dashboard', status=s) }}" class="{{ 'active' if status == s }}">{{ label }} ({{ counts[s] }})</a>
+    {% endfor %}
+  </nav>
+
+  {% if items %}
+    <div class="card">
+      <ul class="list">
+        {% for r in items %}
+          <li><a class="list-item" href="{{ url_for('admin.review', req_id=r.id) }}">
+            {% with person=r.user, size='md' %}{% include "partials/avatar.html" %}{% endwith %}
+            <span class="grow">
+              <span class="title">{{ r.user.full_name }}</span>
+              <span class="sub">{{ r.id_type_label }} · sent {{ r.submitted_at|time_ago }}</span>
+            </span>
+            <span class="badge badge-{{ r.status }}">{{ r.status }}</span>
+          </a></li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% else %}
+    <div class="empty-state">Nothing here right now.</div>
+  {% endif %}
+{% endblock %}

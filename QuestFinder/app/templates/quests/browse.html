@@ -1,0 +1,72 @@
+{% extends "layouts/app.html" %}
+{% block title %}Quests near you{% endblock %}
+{% block page_title %}Quests{% endblock %}
+{% block topbar_actions %}
+  <a class="icon-btn" href="{{ url_for('location.set_location', next=request.full_path) }}" aria-label="Change my location">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="8"/></svg>
+  </a>
+{% endblock %}
+{% block head %}{% include "partials/leaflet.html" %}{% endblock %}
+{% block screen_class %}flush{% endblock %}
+{% block content %}
+  {#- Map of nearby quests (approximate areas) -#}
+  <div class="map map-browse" id="browseMap"></div>
+
+  <div class="browse-body">
+    <form method="get" class="filters" id="filters">
+      <input type="search" name="q" value="{{ q }}" placeholder="Search quests, e.g. garden, Wi-Fi" class="input">
+      <div class="filter-row">
+        <select name="radius" class="input" aria-label="Distance">
+          {% for r in radii %}<option value="{{ r }}" {{ 'selected' if radius == r }}>{{ 'Any distance' if r == 0 else 'Within ' ~ r ~ ' km' }}</option>{% endfor %}
+        </select>
+        <select name="sort" class="input" aria-label="Sort">
+          {% for key, label in sorts.items() %}<option value="{{ key }}" {{ 'selected' if sort == key }}>{{ label }}</option>{% endfor %}
+        </select>
+        <div class="input-prefix"><span>₱</span><input type="number" name="min_pay" value="{{ min_pay }}" min="0" step="10" placeholder="Min pay" class="input" aria-label="Minimum pay"></div>
+      </div>
+    </form>
+
+    <p class="small muted results-head">
+      {{ results|length }} open quest{{ '' if results|length == 1 else 's' }}
+      {% if radius %}within {{ radius|int if radius == radius|int else radius }} km{% endif %} of
+      <b>{{ current_user.location_label or 'your location' }}</b>
+    </p>
+
+    {% for r in results %}
+      {% include "partials/quest_card.html" %}
+    {% else %}
+      <div class="empty-state">
+        <p>No open quests found here.</p>
+        {% if radius and radius < 10 %}<a class="btn btn-light" href="{{ url_for('quests.browse', radius=0, sort=sort) }}">Show any distance</a>{% endif %}
+      </div>
+    {% endfor %}
+  </div>
+{% endblock %}
+{% block scripts %}
+  <script src="{{ url_for('static', filename='vendor/leaflet/leaflet.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/map.js') }}"></script>
+  <script>
+  (function () {
+    const me = { lat: {{ current_user.latitude }}, lng: {{ current_user.longitude }} };
+    const quests = {{ markers|tojson }};
+    const radiusKm = {{ radius }};
+    const map = QF.map.create(document.getElementById("browseMap"), me.lat, me.lng, 15);
+    QF.map.drawBoundary(map, {{ barangay_boundary()|tojson }}, false);
+    L.marker([me.lat, me.lng], { icon: QF.map.pinIcon("me"), title: "You" }).addTo(map).bindPopup("You are here");
+    const bounds = [[me.lat, me.lng]];
+    if (radiusKm > 0) {
+      L.circle([me.lat, me.lng], { radius: radiusKm * 1000, color: "#0E5E4E", weight: 1, fillOpacity: 0.04 }).addTo(map);
+    }
+    quests.forEach((q) => {
+      const popup = `<a href="${q.url}"><b>${QF.escape(q.title)}</b></a><br>₱${q.pay.toLocaleString()}` +
+                    (q.km !== null ? ` · ${q.km < 1 ? q.km.toFixed(2) : q.km.toFixed(1)} km` : "");
+      L.marker([q.lat, q.lng], { icon: QF.map.pinIcon("quest") }).addTo(map).bindPopup(popup);
+      bounds.push([q.lat, q.lng]);
+    });
+    if (bounds.length > 1) map.fitBounds(bounds, { padding: [30, 30], maxZoom: 16 });
+
+    // Apply filters as soon as a dropdown changes.
+    document.querySelectorAll("#filters select").forEach((s) => s.addEventListener("change", () => s.form.submit()));
+  })();
+  </script>
+{% endblock %}

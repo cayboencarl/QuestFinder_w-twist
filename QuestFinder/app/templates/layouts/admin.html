@@ -1,0 +1,26 @@
+{#- Barangay Admin layout: no marketplace tab bar. -#}
+{% extends "layouts/base.html" %}
+{% block body_class %}admin{% endblock %}
+{% block shell %}
+  <header class="topbar admin-topbar">
+    <a class="icon-btn" href="{{ url_for('admin.dashboard') }}" aria-label="Dashboard">
+      <img src="{{ url_for('static', filename='img/favicon.svg') }}" alt="" width="26" height="26">
+    </a>
+    <h1 class="topbar-title">{% block page_title %}Barangay Admin{% endblock %}</h1>
+    <div class="topbar-actions">
+      <a class="icon-btn" href="{{ url_for('profile.settings') }}" aria-label="Settings">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v3M12 20v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M1 12h3M20 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>
+      </a>
+    </div>
+  </header>
+  <main class="screen screen-admin">
+    {% set ep = request.endpoint or '' %}
+    <nav class="segmented admin-nav" aria-label="Admin sections">
+      <a href="{{ url_for('admin.dashboard') }}" class="{{ 'active' if ep in ('admin.dashboard', 'admin.review') }}">Verifications</a>
+      <a href="{{ url_for('admin.quests') }}" class="{{ 'active' if ep.startswith('admin.quest') }}">Posted Quests</a>
+      <a href="{{ url_for('admin.users') }}" class="{{ 'active' if ep.startswith('admin.user') or ep.endswith('_user') }}">Users</a>
+    </nav>
+    {% include "partials/flash.html" %}
+    {% block content %}{% endblock %}
+  </main>
+{% endblock %}

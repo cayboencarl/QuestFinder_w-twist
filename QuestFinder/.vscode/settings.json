@@ -1,0 +1,6 @@
+{
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
+  "files.associations": { "*.html": "jinja-html" },
+  "files.exclude": { "**/__pycache__": true },
+  "terminal.integrated.defaultProfile.windows": "Git Bash"
+}

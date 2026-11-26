@@ -1,0 +1,82 @@
+{% extends "layouts/app.html" %}
+{% block title %}My location{% endblock %}
+{% block page_title %}My location{% endblock %}
+{% block head %}{% include "partials/leaflet.html" %}{% endblock %}
+{% block content %}
+  {#- Explanation shown BEFORE the browser asks for permission. -#}
+  <section class="card" id="explain" {{ 'hidden' if current_user.has_location }}>
+    <div class="status-icon status-ok">📍</div>
+    <h2 class="center">Find quests near you</h2>
+    <p class="muted small center">QuestFinder uses your location to show how many <b>kilometres</b> each quest is from you
+      and to sort quests from nearest to farthest.</p>
+    <ul class="small muted">
+      <li>Your exact location is never shown to other users.</li>
+      <li>We only read it when you tap the button below.</li>
+      <li>You can place a pin on the map instead.</li>
+    </ul>
+    <button type="button" class="btn btn-primary btn-block" id="useGps">Use my current location</button>
+    <button type="button" class="btn btn-ghost btn-block" id="usePin">Place a pin on the map instead</button>
+  </section>
+
+  <form method="post" class="form" id="locForm" {{ 'hidden' if not current_user.has_location }}>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="next" value="{{ next_url }}">
+    <input type="hidden" name="latitude" id="lat" value="{{ current_user.latitude or '' }}">
+    <input type="hidden" name="longitude" id="lng" value="{{ current_user.longitude or '' }}">
+    <div class="map map-tall" id="pickMap"></div>
+    <p class="hint small muted">Drag the pin or tap the map to adjust.</p>
+    <p class="scan-msg" id="locMsg" role="status"></p>
+    <button type="button" class="btn btn-light btn-block" id="useGps2">📍 Use my current location</button>
+    <div class="field">
+      <label for="label">Landmark or street <span class="muted">(optional)</span></label>
+      <input type="text" name="label" id="label" maxlength="255" placeholder="e.g. Near San Vicente chapel"
+             value="{{ current_user.location_label if current_user.location_label and current_user.location_label != 'Pinned location' else '' }}">
+    </div>
+    <button class="btn btn-primary btn-block" type="submit" id="saveLoc" {{ 'disabled' if not current_user.has_location }}>Save location</button>
+  </form>
+{% endblock %}
+{% block scripts %}
+  <script src="{{ url_for('static', filename='vendor/leaflet/leaflet.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/map.js') }}"></script>
+  <script>
+  (function () {
+    const defaults = {{ map_defaults|tojson }};
+    const form = document.getElementById("locForm");
+    const explain = document.getElementById("explain");
+    const msg = document.getElementById("locMsg");
+    let picker = null;
+
+    function showMap() {
+      explain.hidden = true;
+      form.hidden = false;
+      if (!picker) {
+        picker = QF.map.picker(document.getElementById("pickMap"),
+          document.getElementById("lat"), document.getElementById("lng"), defaults,
+          () => { document.getElementById("saveLoc").disabled = false; });
+      }
+      setTimeout(() => picker.map.invalidateSize(), 50);
+    }
+
+    async function gps() {
+      showMap();
+      msg.className = "scan-msg"; msg.textContent = "Finding your location…";
+      try {
+        const p = await QF.map.locate();
+        picker.set(p.lat, p.lng, true);
+        msg.className = "scan-msg scan-ok";
+        msg.textContent = `Location found (accurate to about ${Math.round(p.accuracy)} m). Adjust the pin if needed.`;
+      } catch (err) {
+        msg.className = "scan-msg scan-error"; msg.textContent = err.message;
+      }
+    }
+
+    document.getElementById("useGps").addEventListener("click", gps);
+    document.getElementById("useGps2").addEventListener("click", gps);
+    document.getElementById("usePin").addEventListener("click", () => {
+      showMap();
+      msg.textContent = "Tap the map or drag the pin to your location.";
+    });
+    if (!form.hidden) showMap();
+  })();
+  </script>
+{% endblock %}

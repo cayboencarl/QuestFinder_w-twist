@@ -1,0 +1,15 @@
+{% extends "layouts/app.html" %}
+{% block title %}Transaction history{% endblock %}
+{% block page_title %}Transaction History{% endblock %}
+{% block content %}
+  <nav class="segmented" aria-label="Filter">
+    {% for key, label in [("all", "All"), ("in", "Money in"), ("out", "Money out")] %}
+      <a href="{{ url_for('wallet.history', flow=key) }}" class="{{ 'active' if flow == key }}">{{ label }}</a>
+    {% endfor %}
+  </nav>
+  {% if items %}
+    <div class="card">{% include "wallet/_tx_list.html" %}</div>
+  {% else %}
+    <div class="empty-state">🧾<br>No transactions here yet.</div>
+  {% endif %}
+{% endblock %}

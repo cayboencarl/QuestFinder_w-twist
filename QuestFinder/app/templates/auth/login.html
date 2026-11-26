@@ -1,0 +1,16 @@
+{% extends "layouts/plain.html" %}
+{% block title %}Log in{% endblock %}
+{% block content %}
+  <div class="auth-head">
+    <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="" class="logo-mark">
+    <h1>Welcome back</h1>
+    <p class="muted">Log in to post or find quests near you.</p>
+  </div>
+  <form method="post" class="form" novalidate>
+    {{ form.hidden_tag() }}
+    {% with field=form.email, attrs={"autocomplete": "email", "placeholder": "you@example.com"} %}{% include "partials/field.html" %}{% endwith %}
+    {% with field=form.password, attrs={"autocomplete": "current-password"} %}{% include "partials/field.html" %}{% endwith %}
+    <button class="btn btn-primary btn-block" type="submit">Log in</button>
+  </form>
+  <p class="auth-foot">New here? <a href="{{ url_for('auth.register') }}"><b>Create an account</b></a></p>
+{% endblock %}

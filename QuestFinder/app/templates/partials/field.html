@@ -1,0 +1,16 @@
+{#- Renders one WTForms field with label, hint and errors.
+    Usage: {% with field=form.email, hint="..." %}{% include "partials/field.html" %}{% endwith %} -#}
+<div class="field {{ 'has-error' if field.errors }}">
+  {% if field.type == "BooleanField" %}
+    <label class="checkbox">{{ field() }} <span>{{ field.label.text }}</span></label>
+  {% else %}
+    {{ field.label() }}
+    {% if prefix is defined and prefix %}
+      <div class="input-prefix"><span>{{ prefix }}</span>{{ field(**(attrs|default({}))) }}</div>
+    {% else %}
+      {{ field(**(attrs|default({}))) }}
+    {% endif %}
+  {% endif %}
+  {% if hint is defined and hint %}<p class="hint">{{ hint }}</p>{% endif %}
+  {% for error in field.errors %}<p class="error">{{ error }}</p>{% endfor %}
+</div>

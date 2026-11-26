@@ -1,0 +1,46 @@
+{% extends "layouts/admin.html" %}
+{% block title %}Users · Barangay Admin{% endblock %}
+{% block page_title %}Registered users{% endblock %}
+{% block content %}
+  <div class="admin-hello">
+    <p class="muted small">{{ barangay_name }}, Baguio City</p>
+    <h2>Registered users</h2>
+  </div>
+
+  <form method="get" class="search-row mt" role="search">
+    <input type="hidden" name="show" value="{{ show }}">
+    <input type="search" name="q" value="{{ q }}" placeholder="Search name, email or phone" aria-label="Search users">
+    <button class="btn btn-primary btn-sm">Search</button>
+  </form>
+
+  <nav class="chip-row" aria-label="Filter users">
+    {% for key, label in filters.items() %}
+      <a href="{{ url_for('admin.users', show=key, q=q or None) }}" class="{{ 'active' if show == key }}">{{ label }} ({{ counts[key] }})</a>
+    {% endfor %}
+  </nav>
+
+  {% if items %}
+    <div class="card">
+      <ul class="list">
+        {% for u in items %}
+          <li><a class="list-item" href="{{ url_for('admin.user_detail', user_id=u.id) }}">
+            {% with person=u, size='md' %}{% include "partials/avatar.html" %}{% endwith %}
+            <span class="grow">
+              <span class="title">{{ u.full_name }}</span>
+              <span class="sub">{{ u.email }} · joined {{ u.created_at|local_dt('%b %d, %Y') }}</span>
+            </span>
+            {% if u.is_suspended %}
+              <span class="badge badge-suspended">suspended</span>
+            {% elif u.is_verified %}
+              <span class="badge badge-verified">verified</span>
+            {% else %}
+              <span class="badge badge-unverified">not verified</span>
+            {% endif %}
+          </a></li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% else %}
+    <div class="empty-state">No users found.</div>
+  {% endif %}
+{% endblock %}

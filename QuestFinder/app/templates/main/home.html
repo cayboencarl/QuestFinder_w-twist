@@ -1,0 +1,53 @@
+{% extends "layouts/app.html" %}
+{% block title %}Home{% endblock %}
+{% block topbar %}{% endblock %}
+{% block screen_class %}home{% endblock %}
+{% block content %}
+  {#- Top row: profile (left) · notifications + settings (right) -#}
+  <div class="home-top">
+    <a href="{{ link_to('profile.view', user_id=current_user.id) }}" class="home-profile" aria-label="My profile">
+      {% with person=current_user, size='lg' %}{% include "partials/avatar.html" %}{% endwith %}
+      <span class="home-hello">
+        <small>Hello,</small>
+        <strong>{{ current_user.first_name }}</strong>
+      </span>
+    </a>
+    <div class="home-actions">
+      <a href="{{ link_to('notifications.index') }}" class="icon-btn" aria-label="Notifications">
+        <svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+        {% if unread_notifications %}<em class="dot-badge">{{ unread_notifications }}</em>{% endif %}
+      </a>
+      <a href="{{ link_to('profile.settings') }}" class="icon-btn" aria-label="Settings">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+      </a>
+    </div>
+  </div>
+
+  {% if config.REQUIRE_VERIFICATION and not current_user.is_verified %}
+    <a href="{{ link_to('verification.start') }}" class="banner banner-warning">
+      <strong>Verify your identity</strong>
+      <span>Scan your ID and your face to start posting and accepting quests.</span>
+    </a>
+  {% endif %}
+
+  {#- Logo box -#}
+  <div class="logo-box">
+    <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="QuestFinder" class="logo-mark">
+    <p class="logo-word">Quest<span>Finder</span></p>
+    <p class="logo-tag">Brgy. San Vicente, Baguio City</p>
+  </div>
+
+  {#- Two main buttons: Post (client) and Quest (task worker) -#}
+  <div class="home-buttons">
+    <a href="{{ link_to('quests.new') }}" class="big-btn big-btn-post">
+      <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+      <span><strong>Post</strong><small>Need help? Post a quest</small></span>
+    </a>
+    <a href="{{ link_to('quests.browse') }}" class="big-btn big-btn-quest">
+      <svg viewBox="0 0 24 24"><path d="M12 22s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg>
+      <span><strong>Quest</strong><small>Find nearby tasks</small></span>
+    </a>
+  </div>
+
+  <a href="{{ link_to('quests.mine') }}" class="text-link center">My quests &amp; applications →</a>
+{% endblock %}

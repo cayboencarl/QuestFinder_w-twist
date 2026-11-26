@@ -1,0 +1,22 @@
+{#- Layout for signed-in member screens: optional top bar + content + bottom tab bar. -#}
+{% extends "layouts/base.html" %}
+{% block shell %}
+  {% block topbar %}
+  <header class="topbar">
+    {% if back_url is defined and back_url %}
+      <a class="icon-btn" href="{{ back_url }}" aria-label="Back">
+        <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+      </a>
+    {% else %}<span class="icon-btn-spacer"></span>{% endif %}
+    <h1 class="topbar-title">{% block page_title %}{% endblock %}</h1>
+    <div class="topbar-actions">{% block topbar_actions %}<span class="icon-btn-spacer"></span>{% endblock %}</div>
+  </header>
+  {% endblock %}
+
+  <main class="screen {% block screen_class %}{% endblock %}">
+    {% include "partials/flash.html" %}
+    {% block content %}{% endblock %}
+  </main>
+
+  {% if not current_user.is_admin %}{% include "partials/bottom_nav.html" %}{% endif %}
+{% endblock %}

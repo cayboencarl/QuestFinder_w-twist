@@ -1,0 +1,71 @@
+{% extends "layouts/admin.html" %}
+{% block title %}{{ quest.title }} · Barangay Admin{% endblock %}
+{% block page_title %}Quest details{% endblock %}
+{% block content %}
+  <a href="{{ url_for('admin.quests') }}" class="small">← All posted quests</a>
+  <div class="card mt">
+    {% if quest.photo_filename %}
+      <img class="quest-photo" src="{{ url_for('files.quest_photo', quest_id=quest.id) }}" alt="Quest photo">
+    {% endif %}
+    <div class="row between">
+      <h2 style="margin:0">{{ quest.title }}</h2>
+      <span class="badge badge-{{ quest.status }}">{{ quest.status }}</span>
+    </div>
+    <p class="muted small" style="margin:4px 0 12px">Posted {{ quest.created_at|local_dt }}</p>
+    <dl class="kv">
+      <dt>Pay</dt><dd>{{ quest.pay|peso }}</dd>
+      <dt>Payment</dt><dd>{{ {'unpaid': 'Not reserved yet', 'held': 'Reserved from client', 'released': 'Paid to worker'}[quest.payment_status] }}</dd>
+      <dt>Duration</dt><dd>{{ quest.duration_minutes|duration }}</dd>
+      <dt>Location</dt><dd>{{ quest.location_label }}</dd>
+      <dt>Exact pin</dt><dd>{{ '%.5f'|format(quest.latitude) }}, {{ '%.5f'|format(quest.longitude) }}</dd>
+      {% if quest.assigned_at %}<dt>Assigned</dt><dd>{{ quest.assigned_at|local_dt }}</dd>{% endif %}
+      {% if quest.completed_at %}<dt>Completed</dt><dd>{{ quest.completed_at|local_dt }}</dd>{% endif %}
+      {% if quest.cancelled_at %}<dt>Cancelled</dt><dd>{{ quest.cancelled_at|local_dt }}</dd>{% endif %}
+    </dl>
+  </div>
+
+  <div class="card">
+    <h3 class="section-title" style="margin-top:0">Description</h3>
+    <p style="white-space:pre-line;margin:0 0 12px">{{ quest.description }}</p>
+    <h3 class="section-title">Qualifications</h3>
+    <p style="white-space:pre-line;margin:0">{{ quest.qualification }}</p>
+  </div>
+
+  <div class="card">
+    <h3 class="section-title" style="margin-top:0">People</h3>
+    <ul class="list">
+      <li><a class="list-item" href="{{ url_for('admin.user_detail', user_id=quest.client.id) }}">
+        {% with person=quest.client, size='md' %}{% include "partials/avatar.html" %}{% endwith %}
+        <span class="grow"><span class="title">{{ quest.client.full_name }}</span><span class="sub">Client · {{ quest.client.email }}</span></span>
+        {% if quest.client.is_suspended %}<span class="badge badge-suspended">suspended</span>{% endif %}
+      </a></li>
+      {% if quest.worker %}
+        <li><a class="list-item" href="{{ url_for('admin.user_detail', user_id=quest.worker.id) }}">
+          {% with person=quest.worker, size='md' %}{% include "partials/avatar.html" %}{% endwith %}
+          <span class="grow"><span class="title">{{ quest.worker.full_name }}</span><span class="sub">Task worker · {{ quest.worker.email }}</span></span>
+          {% if quest.worker.is_suspended %}<span class="badge badge-suspended">suspended</span>{% endif %}
+        </a></li>
+      {% endif %}
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3 class="section-title" style="margin-top:0">Applications ({{ applications|length }})</h3>
+    {% if applications %}
+      <ul class="list">
+        {% for a in applications %}
+          <li><a class="list-item" href="{{ url_for('admin.user_detail', user_id=a.worker.id) }}">
+            {% with person=a.worker, size='md' %}{% include "partials/avatar.html" %}{% endwith %}
+            <span class="grow">
+              <span class="title">{{ a.worker.full_name }}</span>
+              <span class="sub">Applied {{ a.created_at|time_ago }}{% if a.distance_km is not none %} · {{ a.distance_km|km }} away{% endif %}</span>
+            </span>
+            <span class="badge badge-{{ a.status }}">{{ a.status }}</span>
+          </a></li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted small" style="margin:0">No one has applied yet.</p>
+    {% endif %}
+  </div>
+{% endblock %}

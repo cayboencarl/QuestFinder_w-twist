@@ -1,0 +1,49 @@
+{% extends "layouts/app.html" %}
+{% block title %}My quests{% endblock %}
+{% block page_title %}My quests{% endblock %}
+{% block content %}
+  <nav class="segmented" aria-label="My quests">
+    <a href="{{ url_for('quests.mine', tab='posted') }}" class="{{ 'active' if tab == 'posted' }}">Posted ({{ posted|length }})</a>
+    <a href="{{ url_for('quests.mine', tab='accepted') }}" class="{{ 'active' if tab == 'accepted' }}">Accepted ({{ applications|length }})</a>
+  </nav>
+
+  {% if tab == 'accepted' %}
+    {% for a in applications %}
+      <a class="card mine-item" href="{{ url_for('quests.detail', quest_id=a.quest_id) }}">
+        <div class="row between"><b>{{ a.quest.title }}</b><span class="pay">{{ a.quest.pay|peso }}</span></div>
+        <div class="row between small">
+          <span class="muted">Client: {{ a.quest.client.full_name }}</span>
+          {% if a.status == 'accepted' and a.quest.status == 'completed' %}
+            <span class="badge badge-completed">completed{{ ' · rate' if a.quest_id not in rated }}</span>
+          {% elif a.status == 'accepted' %}
+            <span class="badge badge-assigned">you're hired</span>
+          {% elif a.status == 'pending' %}
+            <span class="badge badge-pending">waiting for client</span>
+          {% else %}
+            <span class="badge badge-{{ a.status }}">{{ 'not chosen' if a.status == 'rejected' else a.status }}</span>
+          {% endif %}
+        </div>
+      </a>
+    {% else %}
+      <div class="empty-state">You haven't accepted any quest yet.<br>
+        <a class="btn btn-primary mt" href="{{ url_for('quests.browse') }}">Find quests near you</a></div>
+    {% endfor %}
+  {% else %}
+    {% for q in posted %}
+      <a class="card mine-item" href="{{ url_for('quests.detail', quest_id=q.id) }}">
+        <div class="row between"><b>{{ q.title }}</b><span class="pay">{{ q.pay|peso }}</span></div>
+        <div class="row between small">
+          <span class="muted">
+            {% if q.status == 'open' %}{{ pending_counts.get(q.id, 0) }} task worker(s) accepted
+            {% elif q.status in ('assigned', 'completed') %}Task worker: {{ q.worker.full_name }}
+            {% else %}Cancelled{% endif %}
+          </span>
+          <span class="badge badge-{{ q.status }}">{{ q.status }}{{ ' · rate' if q.status == 'completed' and q.id not in rated }}</span>
+        </div>
+      </a>
+    {% else %}
+      <div class="empty-state">You haven't posted a quest yet.<br>
+        <a class="btn btn-primary mt" href="{{ url_for('quests.new') }}">Post a quest</a></div>
+    {% endfor %}
+  {% endif %}
+{% endblock %}

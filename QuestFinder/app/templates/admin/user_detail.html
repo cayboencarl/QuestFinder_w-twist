@@ -1,0 +1,121 @@
+{% extends "layouts/admin.html" %}
+{% block title %}{{ user.full_name }} · Barangay Admin{% endblock %}
+{% block page_title %}User details{% endblock %}
+{% block content %}
+  <a href="{{ url_for('admin.users') }}" class="small">← All users</a>
+  <div class="card mt">
+    <div class="row">
+      {% with person=user, size='lg' %}{% include "partials/avatar.html" %}{% endwith %}
+      <div class="grow">
+        <h2 style="margin:0">{{ user.full_name }}</h2>
+        <p class="muted small" style="margin:0">{{ user.email }}</p>
+      </div>
+      {% if user.is_suspended %}
+        <span class="badge badge-suspended">suspended</span>
+      {% elif user.is_verified %}
+        <span class="badge badge-verified">verified</span>
+      {% else %}
+        <span class="badge badge-unverified">not verified</span>
+      {% endif %}
+    </div>
+    <dl class="kv mt">
+      <dt>Phone</dt><dd>{{ user.phone or '—' }}</dd>
+      <dt>Age</dt><dd>{{ user.age }} (born {{ user.birthdate.strftime('%B %d, %Y') }})</dd>
+      <dt>Location</dt><dd>{{ user.location_label or '—' }}</dd>
+      <dt>Skills</dt><dd>{{ user.skills or '—' }}</dd>
+      <dt>Joined</dt><dd>{{ user.created_at|local_dt }}</dd>
+      <dt>Last login</dt><dd>{{ user.last_login_at|local_dt if user.last_login_at else '—' }}</dd>
+      <dt>Verification</dt>
+      <dd>
+        {% set v = user.latest_verification %}
+        {% if v %}<a href="{{ url_for('admin.review', req_id=v.id) }}">{{ v.status|capitalize }} · {{ v.id_type_label }}</a>{% else %}Not submitted{% endif %}
+      </dd>
+      <dt>Wallet</dt><dd>{{ wallet.balance|peso }}{% if held %} <span class="muted small">(+ {{ held|peso }} reserved for quests)</span>{% endif %}</dd>
+      <dt>Rating</dt><dd>{% if stats.rating %}★ {{ stats.rating }} from {{ stats.rating_count }} review(s){% else %}No reviews yet{% endif %}</dd>
+    </dl>
+  </div>
+
+  <div class="stat-row">
+    <div class="stat"><strong>{{ stats.posted }}</strong><small>quests posted</small></div>
+    <div class="stat"><strong>{{ stats.doing }}</strong><small>quests taken</small></div>
+    <div class="stat"><strong>{{ stats.applications }}</strong><small>applications</small></div>
+  </div>
+
+  {% if recent_quests %}
+    <div class="card">
+      <h3 class="section-title" style="margin-top:0">Recent posted quests</h3>
+      <ul class="list">
+        {% for qst in recent_quests %}
+          <li><a class="list-item" href="{{ url_for('admin.quest_detail', quest_id=qst.id) }}">
+            <span class="grow"><span class="title">{{ qst.title }}</span><span class="sub">{{ qst.pay|peso }} · {{ qst.created_at|time_ago }}</span></span>
+            <span class="badge badge-{{ qst.status }}">{{ qst.status }}</span>
+          </a></li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+
+  {# ---- Suspension ---- #}
+  {% if user.is_suspended %}
+    <div class="card">
+      <h3 class="section-title" style="margin-top:0">Suspended</h3>
+      <p style="margin:0 0 6px">Until <b>{{ user.suspended_until|local_dt }}</b> (since {{ user.suspended_at|local_dt }}).</p>
+      <p class="muted small" style="margin:0 0 10px">Reason: {{ user.suspension_reason }}</p>
+      <p class="muted small" style="margin:0 0 10px">They cannot log in, and their open quests are hidden from task workers until then.</p>
+      <form method="post" action="{{ url_for('admin.unsuspend_user', user_id=user.id) }}"
+            data-confirm="Lift the suspension of {{ user.full_name }}? They can log in right away.">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-light btn-block">Lift suspension now</button>
+      </form>
+    </div>
+  {% endif %}
+
+  <form method="post" action="{{ url_for('admin.suspend_user', user_id=user.id) }}" class="card form"
+        data-confirm="Suspend {{ user.full_name }}? They will be logged out and cannot log in until the time ends.">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <h3 class="section-title" style="margin:0">{{ 'Change suspension' if user.is_suspended else 'Suspend account' }}</h3>
+    <div>
+      <span class="field-label">Quick choice</span>
+      <div class="preset-row">
+        {% for n, u, label in [(1, 'days', '1 day'), (3, 'days', '3 days'), (1, 'weeks', '1 week'), (2, 'weeks', '2 weeks'), (30, 'days', '30 days')] %}
+          <button type="button" data-amount="{{ n }}" data-unit="{{ u }}"
+                  class="js-preset">{{ label }}</button>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="suspend-grid">
+      <div class="field">
+        <label for="amount">How long</label>
+        <input type="number" name="amount" id="amount" min="1" max="8760" value="3" required>
+      </div>
+      <div class="field">
+        <label for="unit">Unit</label>
+        <select name="unit" id="unit">
+          {% for key, label in units.items() %}<option value="{{ key }}" {{ 'selected' if key == 'days' }}>{{ label }}</option>{% endfor %}
+        </select>
+      </div>
+    </div>
+    <p class="hint small muted" style="margin:0">The suspension starts now. Up to 365 days.</p>
+    <div class="field">
+      <label for="reason">Reason (shown to the user)</label>
+      <input type="text" name="reason" id="reason" maxlength="255" required
+             placeholder="e.g. Did not show up for an accepted quest">
+    </div>
+    <button class="btn btn-danger btn-block">{{ 'Update suspension' if user.is_suspended else 'Suspend account' }}</button>
+  </form>
+
+  {# ---- Delete ---- #}
+  <form method="post" action="{{ url_for('admin.delete_user', user_id=user.id) }}" class="card form danger-zone"
+        data-confirm="Delete {{ user.full_name }}'s account for good? This cannot be undone.">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <h3>Delete account</h3>
+    <p class="small" style="margin:0">This permanently deletes the account, their posted quests, applications, chats,
+      reviews, wallet and ID scans. Quests they are doing for other clients go back to open, and the clients get
+      their reserved pay back.</p>
+    <div class="field">
+      <label for="confirm_email">Type <b>{{ user.email }}</b> to confirm</label>
+      <input type="text" name="confirm_email" id="confirm_email" autocomplete="off" required>
+    </div>
+    <button class="btn btn-danger btn-block">Delete account permanently</button>
+  </form>
+{% endblock %}

@@ -1,0 +1,126 @@
+{% extends "layouts/app.html" %}
+{% block title %}{{ quest.title }}{% endblock %}
+{% block page_title %}Quest details{% endblock %}
+{% block head %}{% include "partials/leaflet.html" %}{% endblock %}
+{% block screen_class %}flush{% endblock %}
+{% block content %}
+  {#- Map: exact pin for the client / accepted worker, approximate circle for everyone else -#}
+  <div class="map map-detail" id="detailMap"></div>
+
+  <div class="browse-body">
+    <div class="card">
+      <div class="row between">
+        <span class="badge badge-{{ quest.status }}">{{ quest.status }}</span>
+        {% if distance is not none %}<span class="small muted">📍 {{ '' if point.exact else '~' }}{{ distance|km }} away</span>{% endif %}
+      </div>
+      <h2 class="detail-title">{{ quest.title }}</h2>
+
+      {% if quest.photo_filename %}
+        <img class="detail-photo" src="{{ url_for('files.quest_photo', quest_id=quest.id) }}" alt="Quest photo">
+      {% endif %}
+
+      <h3 class="section-title">Description</h3>
+      <p>{{ quest.description }}</p>
+      <h3 class="section-title">Qualification</h3>
+      <p>{{ quest.qualification }}</p>
+
+      <dl class="kv detail-kv">
+        <dt>Pay</dt><dd class="pay">{{ quest.pay|peso }}</dd>
+        <dt>Duration</dt><dd>{{ quest.duration_minutes|duration }}</dd>
+        <dt>Location</dt>
+        <dd>{% if point.exact %}{{ quest.location_label }}{% else %}Approximate area · exact spot shown after the client accepts you{% endif %}</dd>
+        <dt>Posted</dt><dd>{{ quest.created_at|time_ago }}</dd>
+      </dl>
+    </div>
+
+    {#- Client card -#}
+    <a class="card row" href="{{ url_for('profile.view', user_id=quest.client_id) }}">
+      {% with person=quest.client, size='md' %}{% include "partials/avatar.html" %}{% endwith %}
+      <span class="grow">
+        <b>{{ quest.client.full_name }}</b>{% if is_client %} <span class="muted small">(you)</span>{% endif %}<br>
+        <span class="small muted">Client · ★ {{ client_rating.average if client_rating.average is not none else 'New' }}
+          {% if client_rating.count %}({{ client_rating.count }}){% endif %}</span>
+      </span>
+      <span>›</span>
+    </a>
+
+    {#- ===== Actions ===== -#}
+    {% if is_client %}
+      {% if quest.status == 'open' %}
+        <a class="btn btn-primary btn-block" href="{{ url_for('quests.applicants', quest_id=quest.id) }}">
+          View task workers who accepted ({{ pending_count }})</a>
+        <form method="post" action="{{ url_for('quests.cancel', quest_id=quest.id) }}" data-confirm="Cancel this quest? Task workers will no longer see it.">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="btn btn-danger btn-block" type="submit">Cancel quest</button>
+        </form>
+      {% elif quest.status == 'assigned' %}
+        <div class="banner banner-info"><strong>{{ quest.worker.full_name }} is working on this quest.</strong>
+          <span>{{ quest.pay|peso }} is reserved from your wallet.</span></div>
+        <a class="btn btn-light btn-block" href="{{ url_for('messages.thread', convo_id=quest.conversation.id) }}">💬 Chat with {{ quest.worker.first_name }}</a>
+        <form method="post" action="{{ url_for('quests.complete', quest_id=quest.id) }}" data-confirm="Mark as completed? {{ quest.pay|peso }} will be released to {{ quest.worker.full_name }}.">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="btn btn-primary btn-block" type="submit">Mark as completed &amp; release pay</button>
+        </form>
+      {% elif quest.status == 'completed' %}
+        <div class="banner banner-info"><strong>Completed {{ quest.completed_at|local_dt }}</strong>
+          <span>{{ quest.pay|peso }} was paid to {{ quest.worker.full_name }}.</span></div>
+        {% if not already_rated %}<a class="btn btn-accent btn-block" href="{{ url_for('ratings.rate', quest_id=quest.id) }}">★ Rate {{ quest.worker.first_name }}</a>{% endif %}
+      {% endif %}
+
+    {% elif is_worker %}
+      {% if quest.status == 'assigned' %}
+        <div class="banner banner-info"><strong>You're the task worker for this quest.</strong>
+          <span>Exact location: {{ quest.location_label }}. Pay is released when the client marks it completed.</span></div>
+        <a class="btn btn-primary btn-block" href="{{ url_for('messages.thread', convo_id=quest.conversation.id) }}">💬 Chat with {{ quest.client.first_name }}</a>
+        <a class="btn btn-light btn-block" target="_blank" rel="noopener"
+           href="https://www.openstreetmap.org/directions?to={{ quest.latitude }}%2C{{ quest.longitude }}">🧭 Directions</a>
+      {% elif quest.status == 'completed' %}
+        <div class="banner banner-info"><strong>Completed — {{ quest.pay|peso }} added to your wallet.</strong></div>
+        {% if not already_rated %}<a class="btn btn-accent btn-block" href="{{ url_for('ratings.rate', quest_id=quest.id) }}">★ Rate {{ quest.client.first_name }}</a>{% endif %}
+      {% endif %}
+
+    {% else %}
+      {#- Task worker who is not (yet) assigned -#}
+      {% if my_app and my_app.status == 'pending' %}
+        <div class="banner banner-warning"><strong>You accepted this quest.</strong>
+          <span>Waiting for {{ quest.client.first_name }} to confirm you.</span></div>
+        <form method="post" action="{{ url_for('quests.withdraw', app_id=my_app.id) }}" data-confirm="Withdraw from this quest?">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="btn btn-ghost btn-block" type="submit">Withdraw</button>
+        </form>
+      {% elif my_app and my_app.status == 'rejected' %}
+        <div class="banner banner-warning"><strong>The client chose another task worker.</strong></div>
+      {% elif config.REQUIRE_VERIFICATION and not current_user.is_verified %}
+        <a class="btn btn-accent btn-block" href="{{ url_for('verification.start') }}">Verify your identity to accept quests</a>
+      {% else %}
+        <form method="post" action="{{ url_for('quests.apply', quest_id=quest.id) }}" class="form">
+          {{ apply_form.hidden_tag() }}
+          {{ apply_form.message(class="input", placeholder="Message to the client (optional)") }}
+          <button class="btn btn-primary btn-block btn-accept" type="submit">ACCEPT QUEST</button>
+        </form>
+      {% endif %}
+    {% endif %}
+  </div>
+{% endblock %}
+{% block scripts %}
+  <script src="{{ url_for('static', filename='vendor/leaflet/leaflet.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/map.js') }}"></script>
+  <script>
+  (function () {
+    const p = {{ point|tojson }};
+    const map = QF.map.create(document.getElementById("detailMap"), p.lat, p.lng, p.exact ? 17 : 16);
+    QF.map.drawBoundary(map, {{ barangay_boundary()|tojson }}, false);
+    if (p.exact) {
+      L.marker([p.lat, p.lng], { icon: QF.map.pinIcon("exact") }).addTo(map);
+    } else {
+      L.circle([p.lat, p.lng], { radius: p.radius, color: "#F59E0B", weight: 2, fillOpacity: 0.15 }).addTo(map);
+    }
+    {% if current_user.has_location %}
+      const me = [{{ current_user.latitude }}, {{ current_user.longitude }}];
+      L.marker(me, { icon: QF.map.pinIcon("me"), title: "You" }).addTo(map).bindPopup("You are here");
+      // Show both you and the quest.
+      map.fitBounds([me, [p.lat, p.lng]], { padding: [40, 40], maxZoom: p.exact ? 17 : 16 });
+    {% endif %}
+  })();
+  </script>
+{% endblock %}

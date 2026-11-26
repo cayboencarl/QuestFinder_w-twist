@@ -1,0 +1,48 @@
+{% extends "layouts/app.html" %}
+{% block title %}Edit profile{% endblock %}
+{% block page_title %}Edit profile{% endblock %}
+{% block content %}
+  <form method="post" enctype="multipart/form-data" class="form" novalidate>
+    {{ form.hidden_tag() }}
+    <label class="upload-box">
+      {% with person=current_user, size='xl' %}{% include "partials/avatar.html" %}{% endwith %}
+      <img id="avatarPreview" alt="" hidden>
+      <span>Change profile photo</span>
+      {{ form.avatar(accept="image/*", **{"data-preview": "#avatarPreview"}) }}
+    </label>
+    {% for e in form.avatar.errors %}<p class="error small">{{ e }}</p>{% endfor %}
+    <div class="form-grid-2">
+      {% with field=form.first_name %}{% include "partials/field.html" %}{% endwith %}
+      {% with field=form.last_name %}{% include "partials/field.html" %}{% endwith %}
+    </div>
+    {% if current_user.is_verified %}<p class="hint small muted">Your name is locked because it was verified against your ID.</p>{% endif %}
+    {% with field=form.phone, attrs={"placeholder": "09XXXXXXXXX", "inputmode": "numeric"} %}{% include "partials/field.html" %}{% endwith %}
+    {% set chosen = form.skills.data or [] %}
+    <div class="field {{ 'has-error' if form.skills.errors }}">
+      <span class="field-label">Skills</span>
+      <details class="multi-select" data-multi-select data-max="8">
+        <summary>
+          <span class="ms-summary" data-placeholder="Choose your skills">{{ chosen|join(', ') if chosen else 'Choose your skills' }}</span>
+          <svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+        </summary>
+        <div class="ms-panel">
+          <input type="search" class="ms-search" placeholder="Search skills…" aria-label="Search skills">
+          {% for group, items in skill_groups.items() %}
+            <fieldset class="ms-group">
+              <legend>{{ group }}</legend>
+              {% for skill in items %}
+                <label class="ms-option"><input type="checkbox" name="skills" value="{{ skill }}" {{ 'checked' if skill in chosen }}><span>{{ skill }}</span></label>
+              {% endfor %}
+            </fieldset>
+          {% endfor %}
+        </div>
+      </details>
+      <div class="chip-row" data-chips></div>
+      <p class="hint">Pick up to 8. Clients see these on your profile and when you accept their quest.</p>
+      {% for e in form.skills.errors %}<p class="error">{{ e }}</p>{% endfor %}
+    </div>
+    {% with field=form.bio %}{% include "partials/field.html" %}{% endwith %}
+    <button class="btn btn-primary btn-block" type="submit">Save</button>
+  </form>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/skills.js') }}"></script>{% endblock %}

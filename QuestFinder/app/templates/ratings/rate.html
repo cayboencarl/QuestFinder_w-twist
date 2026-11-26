@@ -1,0 +1,34 @@
+{% extends "layouts/app.html" %}
+{% block title %}Rate {{ other.first_name }}{% endblock %}
+{% block page_title %}Rate your {{ role }}{% endblock %}
+{% block content %}
+  <div class="card center">
+    {% with person=other, size='xl' %}{% include "partials/avatar.html" %}{% endwith %}
+    <h2 class="mt">{{ other.full_name }}</h2>
+    <p class="muted small">{{ quest.title }} · {{ quest.pay|peso }}</p>
+  </div>
+  {% if existing %}
+    <div class="card center">
+      <p class="stars big">{{ '★' * existing.stars }}<span class="stars-off">{{ '★' * (5 - existing.stars) }}</span></p>
+      {% if existing.comment %}<p>“{{ existing.comment }}”</p>{% endif %}
+      <p class="muted small">You rated this quest {{ existing.created_at|time_ago }}.</p>
+    </div>
+  {% elif quest.status != 'completed' %}
+    <div class="empty-state">You can rate after the quest is completed.</div>
+  {% else %}
+    <form method="post" class="form card">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <fieldset class="star-input" aria-label="Stars">
+        {% for n in range(5, 0, -1) %}
+          <input type="radio" name="stars" id="star{{ n }}" value="{{ n }}" {{ 'checked' if n == 5 }}>
+          <label for="star{{ n }}" title="{{ n }} star{{ 's' if n > 1 }}">★</label>
+        {% endfor %}
+      </fieldset>
+      <div class="field">
+        <label for="comment">Review <span class="muted">(optional)</span></label>
+        <textarea name="comment" id="comment" maxlength="500" placeholder="How was working with {{ other.first_name }}?"></textarea>
+      </div>
+      <button class="btn btn-primary btn-block" type="submit">Submit rating</button>
+    </form>
+  {% endif %}
+{% endblock %}

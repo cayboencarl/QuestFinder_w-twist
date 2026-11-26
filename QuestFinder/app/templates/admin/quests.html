@@ -1,0 +1,42 @@
+{% extends "layouts/admin.html" %}
+{% block title %}Posted Quests · Barangay Admin{% endblock %}
+{% block page_title %}Posted Quests{% endblock %}
+{% block content %}
+  <div class="admin-hello">
+    <p class="muted small">{{ barangay_name }}, Baguio City</p>
+    <h2>Posted quests</h2>
+  </div>
+
+  <form method="get" class="search-row mt" role="search">
+    <input type="hidden" name="status" value="{{ status }}">
+    <input type="search" name="q" value="{{ q }}" placeholder="Search title, place or client" aria-label="Search quests">
+    <button class="btn btn-primary btn-sm">Search</button>
+  </form>
+
+  <nav class="chip-row" aria-label="Filter by status">
+    {% for s in statuses %}
+      <a href="{{ url_for('admin.quests', status=s, q=q or None) }}" class="{{ 'active' if status == s }}">
+        {{ s|capitalize }} ({{ counts.get(s, 0) }})</a>
+    {% endfor %}
+  </nav>
+
+  {% if items %}
+    <div class="card">
+      <ul class="list">
+        {% for qst in items %}
+          <li><a class="list-item" href="{{ url_for('admin.quest_detail', quest_id=qst.id) }}">
+            {% with person=qst.client, size='md' %}{% include "partials/avatar.html" %}{% endwith %}
+            <span class="grow">
+              <span class="title">{{ qst.title }}</span>
+              <span class="sub">{{ qst.client.full_name }} · {{ qst.pay|peso }} · posted {{ qst.created_at|time_ago }}</span>
+              <span class="sub">{{ qst.location_label }}</span>
+            </span>
+            <span class="badge badge-{{ qst.status }}">{{ qst.status }}</span>
+          </a></li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% else %}
+    <div class="empty-state">No quests found.</div>
+  {% endif %}
+{% endblock %}

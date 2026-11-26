@@ -1,0 +1,23 @@
+{#- Quest card from the prototype: title, description, pay, qualification (+ distance). Expects `r` (QuestResult). -#}
+<a class="quest-card" href="{{ url_for('quests.detail', quest_id=r.quest.id) }}" data-quest-id="{{ r.quest.id }}">
+  <div class="quest-card-thumb">
+    {% if r.quest.photo_filename %}
+      <img src="{{ url_for('files.quest_photo', quest_id=r.quest.id) }}" alt="" loading="lazy">
+    {% else %}
+      <span>{{ r.quest.title[:1] }}</span>
+    {% endif %}
+  </div>
+  <div class="quest-card-body">
+    <div class="row between">
+      <h3>{{ r.quest.title }}</h3>
+      <span class="pay">{{ r.quest.pay|peso }}</span>
+    </div>
+    <p class="desc">{{ r.quest.description }}</p>
+    <p class="qual"><b>Qualification:</b> {{ r.quest.qualification }}</p>
+    <div class="meta">
+      <span class="km">📍 {{ r.distance_km|km if r.distance_km is not none else '—' }}</span>
+      <span>⏱ {{ r.quest.duration_minutes|duration }}</span>
+      {% if r.applied_status in ('pending', 'accepted') %}<span class="badge badge-{{ r.applied_status }}">{{ 'Accepted' if r.applied_status == 'pending' else 'Yours' }}</span>{% endif %}
+    </div>
+  </div>
+</a>

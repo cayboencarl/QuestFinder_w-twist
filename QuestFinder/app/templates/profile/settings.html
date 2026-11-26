@@ -1,0 +1,25 @@
+{% extends "layouts/app.html" %}
+{% block title %}Settings{% endblock %}
+{% block page_title %}Settings{% endblock %}
+{% block content %}
+  <div class="card">
+    <ul class="list">
+      {% if not current_user.is_admin %}
+      <li><a class="list-item" href="{{ url_for('profile.edit') }}">
+        <span class="grow"><span class="title">Edit profile</span><span class="sub">Photo, mobile number, skills</span></span><span>›</span></a></li>
+      <li><a class="list-item" href="{{ link_to('location.set_location') }}">
+        <span class="grow"><span class="title">My location</span>
+          <span class="sub">{{ current_user.location_label or 'Not set — needed to see how far quests are' }}</span></span><span>›</span></a></li>
+      <li><a class="list-item" href="{{ url_for('verification.start') }}">
+        <span class="grow"><span class="title">Identity verification</span>
+          <span class="sub">{{ 'Verified ✓' if current_user.is_verified else 'Scan your ID and face' }}</span></span><span>›</span></a></li>
+      {% endif %}
+      <li><a class="list-item" href="{{ url_for('profile.change_password') }}">
+        <span class="grow"><span class="title">Change password</span></span><span>›</span></a></li>
+    </ul>
+  </div>
+  <form method="post" action="{{ url_for('auth.logout') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="btn btn-danger btn-block" type="submit">Log out</button>
+  </form>
+{% endblock %}

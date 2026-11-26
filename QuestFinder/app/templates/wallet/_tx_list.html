@@ -1,0 +1,16 @@
+<ul class="list">
+  {% for t in items %}
+    <li class="list-item tx">
+      <span class="tx-icon {{ 'tx-in' if t.is_credit else 'tx-out' }}">{{ '+' if t.is_credit else '−' }}</span>
+      <span class="grow">
+        <span class="title">{{ t.label }}</span>
+        <span class="sub">
+          {%- if t.quest %}{{ t.quest.title }} · {% elif t.method %}{{ t.method }} · {% endif -%}
+          {{ t.created_at|local_dt('%b %d, %Y %I:%M %p') }}
+        </span>
+        <span class="sub mono">Ref {{ t.reference }}</span>
+      </span>
+      <span class="tx-amount {{ 'tx-in' if t.is_credit else 'tx-out' }}">{{ '+' if t.is_credit else '−' }}{{ t.amount|peso }}</span>
+    </li>
+  {% endfor %}
+</ul>

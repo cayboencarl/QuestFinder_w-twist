@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Secrets & local data
+.env
+instance/*
+!instance/.gitkeep
+
+# Editors / OS
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db
+
+# Local database setup (contains the DB password)
+scripts/setup_database.sql

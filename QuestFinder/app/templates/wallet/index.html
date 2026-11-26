@@ -1,0 +1,27 @@
+{% extends "layouts/app.html" %}
+{% block title %}Wallet{% endblock %}
+{% block page_title %}Wallet{% endblock %}
+{% block content %}
+  <section class="wallet-card">
+    <p class="wallet-label">Available balance</p>
+    <p class="wallet-balance">{{ wallet.balance|peso }}</p>
+    {% if held > 0 %}<p class="wallet-held">₱ on hold for your ongoing quests: <b>{{ held|peso }}</b></p>{% endif %}
+    <div class="btn-row wallet-actions">
+      <a class="btn btn-light" href="{{ url_for('wallet.withdraw') }}">
+        <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12l7 7 7-7"/></svg> Withdraw</a>
+      <a class="btn btn-accent" href="{{ url_for('wallet.deposit') }}">
+        <svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg> Deposit</a>
+    </div>
+  </section>
+  <p class="hint small muted center">Payments are simulated for this prototype. No real money is moved.</p>
+
+  <div class="row between">
+    <h3 class="section-title">Recent activity</h3>
+    <a class="small" href="{{ url_for('wallet.history') }}"><b>See all</b></a>
+  </div>
+  {% if recent %}
+    <div class="card">{% with items=recent %}{% include "wallet/_tx_list.html" %}{% endwith %}</div>
+  {% else %}
+    <div class="empty-state">No transactions yet.</div>
+  {% endif %}
+{% endblock %}

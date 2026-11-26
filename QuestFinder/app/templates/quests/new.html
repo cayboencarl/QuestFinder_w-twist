@@ -1,0 +1,71 @@
+{% extends "layouts/app.html" %}
+{% block title %}Post a quest{% endblock %}
+{% block page_title %}Post{% endblock %}
+{% block head %}{% include "partials/leaflet.html" %}{% endblock %}
+{% block content %}
+  <form method="post" enctype="multipart/form-data" class="form" novalidate>
+    {{ form.hidden_tag() }}
+
+    {#- Location -#}
+    <div class="field {{ 'has-error' if form.latitude.errors or form.location_label.errors }}">
+      <span class="field-label">Location</span>
+      <div class="map" id="questMap"></div>
+      <div class="row between small">
+        <span class="muted">Pin it inside the <b class="boundary-key">{{ barangay_name }}</b> outline.</span>
+        <button type="button" class="btn btn-light btn-sm" id="gpsBtn">📍 Use my location</button>
+      </div>
+      <p class="scan-msg" id="gpsMsg"></p>
+      {{ form.location_label(placeholder="Landmark or street, e.g. blue gate beside the chapel") }}
+      <p class="hint">Task workers only see the approximate area until you accept one of them.</p>
+      {% for e in form.latitude.errors + form.location_label.errors %}<p class="error">{{ e }}</p>{% endfor %}
+    </div>
+
+    {% with field=form.title, attrs={"placeholder": "e.g. Clean Roots"} %}{% include "partials/field.html" %}{% endwith %}
+    {% with field=form.description, attrs={"placeholder": "What needs to be done?"} %}{% include "partials/field.html" %}{% endwith %}
+    {% with field=form.qualification, attrs={"placeholder": "Skills, tools or experience needed"} %}{% include "partials/field.html" %}{% endwith %}
+    <div class="form-grid-2">
+      {% with field=form.pay, prefix="₱", attrs={"inputmode": "decimal", "placeholder": "0"} %}{% include "partials/field.html" %}{% endwith %}
+      {% with field=form.duration_minutes %}{% include "partials/field.html" %}{% endwith %}
+    </div>
+    <p class="hint small muted" style="margin-top:-8px">Wallet balance: <b>{{ balance|peso }}</b>. The pay is reserved from your wallet only when you accept a task worker.</p>
+
+    <label class="upload-box">
+      <img id="photoPreview" alt="" hidden>
+      <span>📷 Upload photo <small class="muted">(optional)</small></span>
+      {{ form.photo(accept="image/*", **{"data-preview": "#photoPreview"}) }}
+    </label>
+    {% for e in form.photo.errors %}<p class="error small">{{ e }}</p>{% endfor %}
+
+    <button class="btn btn-primary btn-block" type="submit">Publish</button>
+  </form>
+{% endblock %}
+{% block scripts %}
+  <script src="{{ url_for('static', filename='vendor/leaflet/leaflet.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/map.js') }}"></script>
+  <script>
+  (function () {
+    const lat = document.getElementById("{{ form.latitude.id }}");
+    const lng = document.getElementById("{{ form.longitude.id }}");
+    const msg = document.getElementById("gpsMsg");
+    const boundary = {{ barangay_boundary()|tojson if config.RESTRICT_QUESTS_TO_BARANGAY else '[]' }};
+    const outside = () => {
+      msg.className = "scan-msg scan-error";
+      msg.textContent = "Quests can only be pinned inside {{ barangay_name }}. Place the pin inside the outline.";
+    };
+    const picker = QF.map.picker(document.getElementById("questMap"), lat, lng, {{ map_defaults|tojson }},
+      () => { msg.className = "scan-msg"; msg.textContent = ""; }, { boundary, onReject: outside });
+    document.getElementById("gpsBtn").addEventListener("click", async () => {
+      msg.className = "scan-msg"; msg.textContent = "Finding your location…";
+      try {
+        const p = await QF.map.locate();
+        if (picker.set(p.lat, p.lng, true)) {
+          msg.className = "scan-msg scan-ok"; msg.textContent = "Pin moved to your current location.";
+        } else {
+          msg.className = "scan-msg scan-error";
+          msg.textContent = "You are outside {{ barangay_name }}. Tap the spot inside the outline where the quest is.";
+        }
+      } catch (err) { msg.className = "scan-msg scan-error"; msg.textContent = err.message; }
+    });
+  })();
+  </script>
+{% endblock %}
